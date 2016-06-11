@@ -20,9 +20,9 @@ int main(int argc, char** argv){
     { // Open Recent Files
         BasicStorageReader file(HOME + RECENT_OPEN_FILENAME);
         open_files = file.get();
+        current_file = open_files.size()-1;
         file.close();
     }
-
 
     { // Open Recent Location
         vector<string> locations;
@@ -48,21 +48,25 @@ int main(int argc, char** argv){
         for(int i = 1; i < argc; i++){
             bool already_exists = false;
 
-            for(int j = 0; j < open_files.size(); j++){
+            for(unsigned int j = 0; j < open_files.size(); j++){
                 if(open_files[j] == argv[i]){
                     already_exists = true;
+                    current_file = j;
+                    cout << j << endl;
                     break;
                 }
             }
 
             if(!already_exists){
                 open_files.push_back(argv[i]);
+                current_file = open_files.size()-1;
             }
         }
     }
 
     if(open_files.size() == 0){
         open_files.push_back("untitled");
+        current_file = 0;
     }
 
     // Load Opened Files
@@ -74,7 +78,7 @@ int main(int argc, char** argv){
 
             if(read.is_open()){
                 while( getline(read,line) ){
-                    text += string_replace_all(line,"\t","    ") + "\n";
+                    data += string_replace_all(line,"\t","    ") + "\n";
                 }
 
                 read.close();
@@ -84,8 +88,15 @@ int main(int argc, char** argv){
             }
 
             text_cache.push_back(data);
+
+            if(current_file == i){
+                text = data;
+            }
         } else {
             text_cache.push_back("");
+            if(current_file == i){
+                text = "";
+            }
         }
     }
 

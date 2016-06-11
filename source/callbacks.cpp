@@ -14,6 +14,30 @@
 
 using namespace std;
 
+void getCount(unsigned int line, unsigned int& lc, unsigned int& cc){
+    unsigned int line_count = 1;
+    unsigned int column_count = 0;
+
+    // Get line and column count (special case if line 1)
+    if(line == 1){
+        column_count = string_get_until(text, "\n").length();
+    }
+
+    // Get line and column count
+    for(unsigned int i = 0; i < text.length(); i++){
+        if(text[i] == '\n'){
+            line_count++;
+
+            if(line == line_count){
+                column_count = string_get_until( text.substr(i+1,text.length()-i-1) , "\n").length();
+            }
+        }
+    }
+
+    lc = line_count;
+    cc = column_count;
+}
+
 void error_callback(int error, const char* description){
     fputs(description, stderr);
 }
@@ -26,6 +50,80 @@ void key_callback(GLFWwindow* window, int key, int scancode, int action, int mod
         else if(key == GLFW_KEY_ENTER and action == GLFW_PRESS){
             text.insert(cursor_position, "\n");
             cursor_position++;
+            blink = true;
+            blink_timer = 30;
+            arial.updateBlinkLocation(&code_surface, text, "", 16, 2, 0);
+        }
+        else if(key == GLFW_KEY_HOME and action == GLFW_PRESS){
+            unsigned int line = 1;
+            unsigned int column = 1;
+
+            std::string before_text = text.substr(0,cursor_position);
+
+            // Get Line
+            for(unsigned int i = 0; i < before_text.length(); i++){
+                if(before_text.substr(i,1) == "\n"){
+                    line++;
+                }
+            }
+
+            // Get Column
+            unsigned int lc = 1;
+
+            if(line == 1){
+                column = string_get_until_last(before_text, "\n").substr(0,cursor_position).length();
+            }
+
+            for(unsigned int i = 0; i < before_text.length(); i++){
+                if(before_text.substr(i,1) == "\n"){
+                    lc++;
+
+                    if(lc == line){
+                       column = string_get_until_last(before_text, "\n").substr(0,cursor_position-i).length();
+                    }
+                }
+            }
+
+            cursor_position -= column;
+            blink = true;
+            blink_timer = 30;
+            arial.updateBlinkLocation(&code_surface, text, "", 16, 2, 0);
+        }
+        else if(key == GLFW_KEY_END and action == GLFW_PRESS){
+            unsigned int line_count = 1;
+            unsigned int column_count = 0;
+            unsigned int line = 1;
+            unsigned int column = 1;
+
+            std::string before_text = text.substr(0,cursor_position);
+
+            // Get Line
+            for(unsigned int i = 0; i < before_text.length(); i++){
+                if(before_text.substr(i,1) == "\n"){
+                    line++;
+                }
+            }
+
+            // Get Column
+            unsigned int lc = 1;
+
+            if(line == 1){
+                column = string_get_until_last(before_text, "\n").substr(0,cursor_position).length();
+            }
+
+            for(unsigned int i = 0; i < before_text.length(); i++){
+                if(before_text.substr(i,1) == "\n"){
+                    lc++;
+
+                    if(lc == line){
+                       column = string_get_until_last(before_text, "\n").substr(0,cursor_position-i).length();
+                    }
+                }
+            }
+
+            getCount(line, line_count, column_count);
+
+            cursor_position += column_count - column;
             blink = true;
             blink_timer = 30;
             arial.updateBlinkLocation(&code_surface, text, "", 16, 2, 0);
@@ -56,6 +154,108 @@ void key_callback(GLFWwindow* window, int key, int scancode, int action, int mod
         }
         else if(key == GLFW_KEY_RIGHT and (action == GLFW_PRESS or action == GLFW_REPEAT) and cursor_position < text.length()){
             cursor_position++;
+            blink = true;
+            blink_timer = 30;
+            arial.updateBlinkLocation(&code_surface, text, "", 16, 2, 0);
+        }
+        else if(key == GLFW_KEY_DOWN and (action == GLFW_PRESS or action == GLFW_REPEAT)){
+            unsigned int line_count = 1;
+            unsigned int column_count = 0;
+            unsigned int next_column_count = 0;
+            unsigned int line = 1;
+            unsigned int column = 1;
+
+            std::string before_text = text.substr(0,cursor_position);
+
+            // Get Line
+            for(unsigned int i = 0; i < before_text.length(); i++){
+                if(before_text.substr(i,1) == "\n"){
+                    line++;
+                }
+            }
+
+            // Get Column
+            unsigned int lc = 1;
+
+            if(line == 1){
+                column = string_get_until_last(before_text, "\n").substr(0,cursor_position).length();
+            }
+
+            for(unsigned int i = 0; i < before_text.length(); i++){
+                if(before_text.substr(i,1) == "\n"){
+                    lc++;
+
+                    if(lc == line){
+                       column = string_get_until_last(before_text, "\n").substr(0,cursor_position-i).length();
+                    }
+                }
+            }
+
+            getCount(line, line_count, column_count);
+
+            if(line + 1 <= line_count){
+                getCount(line+1, line_count, next_column_count);
+                cursor_position = cursor_position - column + column_count + 1;
+
+                if(next_column_count >= column){
+                    cursor_position += column;
+                }
+                else {
+                    cursor_position += next_column_count;
+                }
+            }
+
+            blink = true;
+            blink_timer = 30;
+            arial.updateBlinkLocation(&code_surface, text, "", 16, 2, 0);
+        }
+        else if(key == GLFW_KEY_UP and (action == GLFW_PRESS or action == GLFW_REPEAT)){
+            unsigned int line_count = 1;
+            unsigned int column_count = 0;
+            unsigned int next_column_count = 0;
+            unsigned int line = 1;
+            unsigned int column = 1;
+
+            std::string before_text = text.substr(0,cursor_position);
+
+            // Get Line
+            for(unsigned int i = 0; i < before_text.length(); i++){
+                if(before_text.substr(i,1) == "\n"){
+                    line++;
+                }
+            }
+
+            // Get Column
+            unsigned int lc = 1;
+
+            if(line == 1){
+                column = string_get_until_last(before_text, "\n").substr(0,cursor_position).length();
+            }
+
+            for(unsigned int i = 0; i < before_text.length(); i++){
+                if(before_text.substr(i,1) == "\n"){
+                    lc++;
+
+                    if(lc == line){
+                       column = string_get_until_last(before_text, "\n").substr(0,cursor_position-i).length();
+                    }
+                }
+            }
+
+            getCount(line, line_count, column_count);
+
+            if(line - 1 > 0){
+                getCount(line-1, line_count, next_column_count);
+                cursor_position = cursor_position - column - next_column_count - 1;
+
+                if(next_column_count >= column){
+                    cursor_position += column;
+                }
+                else {
+                    cursor_position += next_column_count;
+                }
+            }
+
             blink = true;
             blink_timer = 30;
             arial.updateBlinkLocation(&code_surface, text, "", 16, 2, 0);
@@ -318,6 +518,84 @@ void mouse_button_callback(GLFWwindow* window, int button, int action, int mods)
                     }
 
                     cursor_position = 0;
+                }
+            }
+            else {
+                int line = floor( (y-24)/16 ) + 1;
+                int column = floor( (x-180)/8 ) - 1;
+
+                unsigned int line_count = 1;
+                unsigned int column_count = 0;
+
+                // Get line and column count (special case if line 1)
+                if(line == 1){
+                    column_count = string_get_until(text, "\n").length();
+                }
+
+                // Get line and column count
+                for(unsigned int i = 0; i < text.length(); i++){
+                    if(text[i] == '\n'){
+                        line_count++;
+
+                        if(line == int(line_count)){
+                            column_count = string_get_until( text.substr(i+1,text.length()-i-1) , "\n").length();
+                        }
+                    }
+                }
+
+                // If over go the last line
+                if(line > int(line_count)){
+                    line = line_count;
+
+                    unsigned int line_position = 1;
+                    for(unsigned int i = 0; i < text.length(); i++){
+                        if(text[i] == '\n'){
+                            line_position++;
+
+                            if(line == int(line_position)){
+                                column_count = string_get_until( text.substr(i+1,text.length()-i-1) , "\n").length();
+                            }
+                        }
+                    }
+                }
+
+                // If over go to last column
+                if(column > int(column_count)){
+                    column = column_count;
+                }
+
+                // Update cursor position
+                if(line > 0 and line <= int(line_count) and column >= 0 and column <= int(column_count)){
+                    unsigned int line_number = 1;
+
+                    if(line == 1){
+                        cursor_position = column;
+                        blink = true;
+                        blink_timer = 30;
+                        arial.updateBlinkLocation(&code_surface, text, "", 16, 2, 0);
+                    }
+
+                    for(unsigned int i = 0; i < text.length(); i++){
+                        if(text[i] == '\n'){
+                            line_number++;
+
+                            if(int(line_number )== line){
+                                cursor_position = i + 1;
+                                blink = true;
+                                blink_timer = 30;
+
+                                if(column <= int(string_get_until_last(text.substr(i, text.length()-1), "\n").length()) ){
+                                    cursor_position += column;
+                                }
+                                else {
+                                    cursor_position += column;
+                                }
+
+                                arial.updateBlinkLocation(&code_surface, text, "", 16, 2, 0);
+                                break;
+                            }
+                        }
+                    }
                 }
             }
         }

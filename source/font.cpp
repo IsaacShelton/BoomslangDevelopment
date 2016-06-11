@@ -6,6 +6,13 @@
 #include "../include/strings.h"
 #include "../include/surface.h"
 
+#define CLASS_COLOR    glColor3ub(228,100,255);
+#define KEYWORD_COLOR  glColor3ub(43,150,255);
+#define OPERATOR_COLOR glColor3ub(255,100,100);
+#define STRING_COLOR   glColor3ub(255,103,204);
+#define NUMBER_COLOR   glColor3ub(255,103,204);
+#define COMMENT_COLOR  glColor3ub(160,160,160);
+
 using namespace std;
 
 bool Font::initialized = false;
@@ -96,12 +103,12 @@ void Font::draw(Surface* surface, string text, string prev_text, int scale, cons
             // Syntax Highlighting
             if(text.c_str()[i] == '0' or text.c_str()[i] == '1' or text.c_str()[i] == '2' or text.c_str()[i] == '3' or text.c_str()[i] == '4' or text.c_str()[i] == '5' or text.c_str()[i] == '6' or text.c_str()[i] == '7' or text.c_str()[i] == '8' or text.c_str()[i] == '9'){
                 // Numbers
-                glColor3ub(255,103,204);
+                NUMBER_COLOR;
             }
             for(unsigned int class_id = 0; class_id < classes.size(); class_id++){ // Classes
                 if( text.length() >= i + classes[class_id].length() and DELIMITERS_CLASS ){
                     if(text.substr(i,classes[class_id].length())==classes[class_id]){
-                        glColor3ub(228,100,255);
+                        CLASS_COLOR;
 
                         for(unsigned int a = 0; a < classes[class_id].length()-1; a++){
                             int glyph_index = FT_Get_Char_Index( face, text.c_str()[i] );
@@ -139,7 +146,7 @@ void Font::draw(Surface* surface, string text, string prev_text, int scale, cons
             for(unsigned int keyword_id = 0; keyword_id < keywords.size(); keyword_id++){ // Keywords
                 if( text.length() >= i + keywords[keyword_id].length() and DELIMITERS_KEYWORD ){
                     if(text.substr(i,keywords[keyword_id].length())==keywords[keyword_id]){
-                        glColor3ub(0,128,255);
+                        KEYWORD_COLOR;
 
                         for(unsigned int a = 0; a < keywords[keyword_id].length()-1; a++){
                             int glyph_index = FT_Get_Char_Index( face, text.c_str()[i] );
@@ -174,8 +181,46 @@ void Font::draw(Surface* surface, string text, string prev_text, int scale, cons
                     }
                 }
             }
+            for(unsigned int operator_id = 0; operator_id < operators.size(); operator_id++){ // Operators
+                if( text.length() >= i + operators[operator_id].length() ){
+                    if(text.substr(i,operators[operator_id].length())==operators[operator_id]){
+                        OPERATOR_COLOR;
+
+                        for(unsigned int a = 0; a < operators[operator_id].length()-1; a++){
+                            int glyph_index = FT_Get_Char_Index( face, text.c_str()[i] );
+                            error = FT_Load_Glyph(face,glyph_index,FT_LOAD_DEFAULT );
+
+                            if(face->glyph->format != FT_GLYPH_FORMAT_BITMAP){
+                                error = FT_Render_Glyph(face->glyph, FT_RENDER_MODE_NORMAL);
+                            }
+
+                            float current_color[4];
+                            glGetFloatv(GL_CURRENT_COLOR,current_color);
+
+                            for(unsigned int j = 0; j < face->glyph->bitmap.rows; j++){ // y
+                                for(unsigned int k = 0; k < face->glyph->bitmap.width; k++){ // x
+                                    if(( (surface->width*( (y - face->glyph->bitmap_top + face->height/64) +j) + (x+k))*4 + 3 < surface->width*surface->height*4)
+                                    and (x+k < surface->width)){
+                                        surface->pixels[ (surface->width*( (y - face->glyph->bitmap_top + face->height/64) +j) + (x+k))*4 ] = current_color[0]*255;
+                                        surface->pixels[ (surface->width*( (y - face->glyph->bitmap_top + face->height/64) +j) + (x+k))*4 + 1] = current_color[1]*255;
+                                        surface->pixels[ (surface->width*( (y - face->glyph->bitmap_top + face->height/64) +j) + (x+k))*4 + 2] = current_color[2]*255;
+                                        surface->pixels[ (surface->width*( (y - face->glyph->bitmap_top + face->height/64) +j) + (x+k))*4 + 3] = face->glyph->bitmap.buffer[j*face->glyph->bitmap.width + k];
+                                    }
+                                }
+                            }
+                            x += face->glyph->advance.x >> 6;
+                            i++;
+
+                            if(i == cursor_position-1){
+                                blink_x = x - originx;
+                                blink_y = y;
+                            }
+                        }
+                    }
+                }
+            }
             if(text.substr(i,1)=="\""){ // Strings
-                glColor3ub(255,103,204);
+                STRING_COLOR;
 
                 for(unsigned int a = 0; (text.c_str()[i] != '"' and i < text.length()) or (a == 0); a++){
                     if(text.c_str()[i] == '\n'){
@@ -219,7 +264,7 @@ void Font::draw(Surface* surface, string text, string prev_text, int scale, cons
                 }
             }
             if(text.substr(i,1)=="#"){ // Line Comments
-                glColor3ub(160,160,160);
+                COMMENT_COLOR;
 
                 for(unsigned int a = 0; (text.c_str()[i] != '\n' and i < text.length()) or (a == 0); a++){
                     int glyph_index = FT_Get_Char_Index( face, text.c_str()[i] );
@@ -253,7 +298,7 @@ void Font::draw(Surface* surface, string text, string prev_text, int scale, cons
                 }
             }
             if(text.substr(i,2)=="/#"){ // Multi-Line Comments
-                glColor3ub(160,160,160);
+                COMMENT_COLOR;
 
                 for(unsigned int a = 0; (text.c_str()[i] != '#' and i < text.length()) or (a == 1); a++){
                     if(text.c_str()[i] == '\n'){
@@ -516,7 +561,7 @@ void Font::drawNew(Surface* surface, string text, string prev_text, int scale, c
                     for(unsigned int class_id = 0; class_id < classes.size(); class_id++){ // Classes
                         if( text.length() >= i + classes[class_id].length() and DELIMITERS_CLASS ){
                             if(text.substr(i,classes[class_id].length())==classes[class_id]){
-                                glColor3ub(228,100,255);
+                                CLASS_COLOR;
                                 int xx = x;
                                 int yy = y;
 
@@ -559,7 +604,7 @@ void Font::drawNew(Surface* surface, string text, string prev_text, int scale, c
                     for(unsigned int keyword_id = 0; keyword_id < keywords.size(); keyword_id++){ // Keywords
                         if( text.length() >= i + keywords[keyword_id].length()  and DELIMITERS_KEYWORD ){
                             if(text.substr(i,keywords[keyword_id].length())==keywords[keyword_id]){
-                                glColor3ub(0,128,255);
+                                KEYWORD_COLOR;
                                 int xx = x;
                                 int yy = y;
 
@@ -599,9 +644,52 @@ void Font::drawNew(Surface* surface, string text, string prev_text, int scale, c
                             }
                         }
                     }
+                    for(unsigned int operator_id = 0; operator_id < operators.size(); operator_id++){ // Keywords
+                        if( text.length() >= i + operators[operator_id].length() ){
+                            if(text.substr(i,operators[operator_id].length())==operators[operator_id]){
+                                OPERATOR_COLOR;
+                                int xx = x;
+                                int yy = y;
+
+                                for(unsigned int a = 0; a < operators[operator_id].length(); a++){
+                                    int glyph_index = FT_Get_Char_Index( face, text.c_str()[i + a] );
+                                    error = FT_Load_Glyph(face,glyph_index,FT_LOAD_DEFAULT );
+
+                                    if(face->glyph->format != FT_GLYPH_FORMAT_BITMAP){
+                                        error = FT_Render_Glyph(face->glyph, FT_RENDER_MODE_NORMAL);
+                                    }
+
+                                    float current_color[4];
+                                    glGetFloatv(GL_CURRENT_COLOR,current_color);
+
+                                    for(unsigned int j = 0; j < face->glyph->bitmap.rows; j++){ // y
+                                        for(unsigned int k = 0; k < face->glyph->bitmap.width; k++){ // x
+                                            if(( (surface->width*( (yy - face->glyph->bitmap_top + face->height/64) +j) + (xx+k))*4 + 3 < surface->width*surface->height*4)
+                                            and (xx+k < surface->width)){
+                                                surface->pixels[ (surface->width*( (yy - face->glyph->bitmap_top + face->height/64) +j) + (xx+k))*4 ] = current_color[0]*255;
+                                                surface->pixels[ (surface->width*( (yy - face->glyph->bitmap_top + face->height/64) +j) + (xx+k))*4 + 1] = current_color[1]*255;
+                                                surface->pixels[ (surface->width*( (yy - face->glyph->bitmap_top + face->height/64) +j) + (xx+k))*4 + 2] = current_color[2]*255;
+                                                surface->pixels[ (surface->width*( (yy - face->glyph->bitmap_top + face->height/64) +j) + (xx+k))*4 + 3] = face->glyph->bitmap.buffer[j*face->glyph->bitmap.width + k];
+                                            }
+                                        }
+                                    }
+                                    xx += face->glyph->advance.x >> 6;
+
+                                    if(i == cursor_position-1){
+                                        blink_x = xx - originx;
+                                        blink_y = xx;
+                                    }
+                                }
+
+                                if(i + operators[operator_id].length() == text.length()){
+                                    prev_text += text.c_str()[i + operators[operator_id].length()];
+                                }
+                            }
+                        }
+                    }
                     if(text.substr(i,1) == "\""){ // Strings
                         if(string_available){
-                            glColor3ub(255,103,204);
+                            STRING_COLOR;
                             int xx = x;
                             int yy = y;
 
@@ -657,7 +745,7 @@ void Font::drawNew(Surface* surface, string text, string prev_text, int scale, c
                         }
                     }
                     if(text.substr(i,1) == "#"){ // Line Comment
-                            glColor3ub(160,160,160);
+                            COMMENT_COLOR;
                             int xx = x;
 
                             unsigned int a;
@@ -743,7 +831,7 @@ void Font::drawNew(Surface* surface, string text, string prev_text, int scale, c
                 }
                 }
                 else {
-                    glColor3ub(160,160,160);
+                    COMMENT_COLOR;
                     int xx = x;
                     int yy = y;
 
@@ -827,14 +915,52 @@ void Font::drawNew(Surface* surface, string text, string prev_text, int scale, c
 
             // Syntax highlighting
             if(text.c_str()[i] == '0' or text.c_str()[i] == '1' or text.c_str()[i] == '2' or text.c_str()[i] == '3' or text.c_str()[i] == '4' or text.c_str()[i] == '5' or text.c_str()[i] == '6' or text.c_str()[i] == '7' or text.c_str()[i] == '8' or text.c_str()[i] == '9'){
-                glColor3ub(255,103,204);
+                NUMBER_COLOR;
             }
             for(unsigned int class_id = 0; class_id < classes.size(); class_id++){ // Classes
                 if( text.length() >= i + classes[class_id].length() and DELIMITERS_CLASS ){
                     if(text.substr(i,classes[class_id].length())==classes[class_id]){
-                        glColor3ub(228,100,255);
+                        CLASS_COLOR;
 
                         for(unsigned int a = 0; a < classes[class_id].length()-1; a++){
+                            int glyph_index = FT_Get_Char_Index( face, text.c_str()[i] );
+                            error = FT_Load_Glyph(face,glyph_index,FT_LOAD_DEFAULT );
+
+                            if(face->glyph->format != FT_GLYPH_FORMAT_BITMAP){
+                                error = FT_Render_Glyph(face->glyph, FT_RENDER_MODE_NORMAL);
+                            }
+
+                            float current_color[4];
+                            glGetFloatv(GL_CURRENT_COLOR,current_color);
+
+                            for(unsigned int j = 0; j < face->glyph->bitmap.rows; j++){ // y
+                                for(unsigned int k = 0; k < face->glyph->bitmap.width; k++){ // x
+                                    if(( (surface->width*( (y - face->glyph->bitmap_top + face->height/64) +j) + (x+k))*4 + 3 < surface->width*surface->height*4)
+                                    and (x+k < surface->width)){
+                                        surface->pixels[ (surface->width*( (y - face->glyph->bitmap_top + face->height/64) +j) + (x+k))*4 ] = current_color[0]*255;
+                                        surface->pixels[ (surface->width*( (y - face->glyph->bitmap_top + face->height/64) +j) + (x+k))*4 + 1] = current_color[1]*255;
+                                        surface->pixels[ (surface->width*( (y - face->glyph->bitmap_top + face->height/64) +j) + (x+k))*4 + 2] = current_color[2]*255;
+                                        surface->pixels[ (surface->width*( (y - face->glyph->bitmap_top + face->height/64) +j) + (x+k))*4 + 3] = face->glyph->bitmap.buffer[j*face->glyph->bitmap.width + k];
+                                    }
+                                }
+                            }
+                            x += face->glyph->advance.x >> 6;
+                            i++;
+
+                            if(i == cursor_position-1){
+                                blink_x = x - originx;
+                                blink_y = y;
+                            }
+                        }
+                    }
+                }
+            }
+            for(unsigned int operator_id = 0; operator_id < operators.size(); operator_id++){ // Operators
+                if( text.length() >= i + operators[operator_id].length() ){
+                    if(text.substr(i,operators[operator_id].length())==operators[operator_id]){
+                        OPERATOR_COLOR;
+
+                        for(unsigned int a = 0; a < operators[operator_id].length()-1; a++){
                             int glyph_index = FT_Get_Char_Index( face, text.c_str()[i] );
                             error = FT_Load_Glyph(face,glyph_index,FT_LOAD_DEFAULT );
 
@@ -870,7 +996,7 @@ void Font::drawNew(Surface* surface, string text, string prev_text, int scale, c
             for(unsigned int keyword_id = 0; keyword_id < keywords.size(); keyword_id++){ // Keywords
                 if( text.length() >= i + keywords[keyword_id].length() ){
                     if(text.substr(i,keywords[keyword_id].length())==keywords[keyword_id] and DELIMITERS_KEYWORD ){
-                        glColor3ub(0,128,255);
+                        KEYWORD_COLOR;
 
                         for(unsigned int a = 0; a < keywords[keyword_id].length()-1; a++){
                             int glyph_index = FT_Get_Char_Index( face, text.c_str()[i] );
@@ -906,7 +1032,7 @@ void Font::drawNew(Surface* surface, string text, string prev_text, int scale, c
                 }
             }
             if(text.substr(i,1)=="\""){ // Strings
-                glColor3ub(255,103,204);
+                STRING_COLOR;
 
                 for(unsigned int a = 0; (text.c_str()[i] != '"' and i < text.length()) or (a == 0); a++){
                     int glyph_index = FT_Get_Char_Index( face, text.c_str()[i] );
@@ -940,7 +1066,7 @@ void Font::drawNew(Surface* surface, string text, string prev_text, int scale, c
                 }
             }
             if(text.substr(i,1)=="#"){ // Line Comment
-                glColor3ub(160,160,160);
+                COMMENT_COLOR;
 
                 for(unsigned int a = 0; (text.c_str()[i] != '#' and i < text.length()) or (a == 0); a++){
                     int glyph_index = FT_Get_Char_Index( face, text.c_str()[i] );

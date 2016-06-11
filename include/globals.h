@@ -89,6 +89,7 @@ extern Surface file_list_surface;
 // Syntax
 
 extern std::vector<std::string> keywords;
+extern std::vector<std::string> operators;
 extern std::vector<std::string> classes;
 
 #endif // GLOBALS_H_INCLUDED
