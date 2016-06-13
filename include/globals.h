@@ -41,7 +41,12 @@
     or text.substr(i-1,1) == "," \
     or text.substr(i-1,1) == "!" \
     or text.substr(i-1,1) == "(" \
-    or text.substr(i-1,1) == ")" )
+    or text.substr(i-1,1) == ")" \
+    or text.substr(i-1,1) == "<" \
+    or text.substr(i-1,1) == ">" \
+    or text.substr(i-1,1) == ")" \
+    or text.substr(i-1,1) == "^" \
+    or text.substr(i-1,1) == "&" )
 
 #define DELIMITERS_CLASS \
     ( i == 0 ? true : \
@@ -56,6 +61,10 @@
     or text.substr(i-1,1) == "!" \
     or text.substr(i-1,1) == "(" \
     or text.substr(i-1,1) == ")" \
+    or text.substr(i-1,1) == "^" \
+    or text.substr(i-1,1) == "&" \
+    or text.substr(i-1,1) == "<" \
+    or text.substr(i-1,1) == ">" \
     or text.substr(i-1,1) == "{" \
     or text.substr(i-1,1) == "}" )
 

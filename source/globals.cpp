@@ -38,9 +38,10 @@ Surface file_list_surface(640,480);
 
 // Syntax
 
-std::vector<std::string> keywords = {"on ","class ","import ","unique ","new ","create ","delete ","as ","catch","try","for ","in ",
-    "true","false","if","unless","while","until","else","register","method","pure","self","none","return ","var"};
-std::vector<std::string> operators = {"+","-","*","/","!","=","(",")",",","^","&"};
+std::vector<std::string> keywords = {"on ","class ","import ","cast ","new ","create ","delete ","as ","catch","try","for ","in ",
+    "true","false","if","unless","while","until","else","register ","method ","pure","self","none","return ","var","native ",
+    "void","any","function ", "global ", "final "};
+std::vector<std::string> operators = {"+","-","*","/","!","=","(",")",",","^","&",">","<"};
 std::vector<std::string> classes = {"Rectangle","Window","String","Number","Positive","Boolean","List","Sprite","Image",
     "Error","Exception",
     "MemoryFailure","OutOfIndex","NotFound","Invalid","ZeroDivision", "Keystroke", "Object", "Numeric", "Byte", "Map",
